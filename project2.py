@@ -371,7 +371,7 @@ def ml_k_means(X, init):
                     closest_z_index = j
             clusterAssignments[i] = closest_z_index
             
-        current_tot_cost = computeTotalCost(centroids, clusterAssignments)
+        current_tot_cost = computeTotalCost(centroids, clusterAssignments, X)
         if total_current_cluster_centroid_assignments == current_tot_cost:
             convergence_count += 1
             
@@ -387,7 +387,7 @@ def ml_k_means(X, init):
             size_of_cluster = points_in_clusters[j]
             new_cluster[cluster_index] = new_cluster[cluster_index]/size_of_cluster
         
-        current_tot_cost = computeTotalCost(centroids, clusterAssignments)
+        current_tot_cost = computeTotalCost(centroids, clusterAssignments, X)
         if total_current_cluster_centroid_assignments == current_tot_cost:
             convergence_count += 1
         if convergence_count == 2:
@@ -396,6 +396,25 @@ def ml_k_means(X, init):
             
     return (centroids, clusterAssignments)
 
+#eucledian distance
+def dist(a, b):
+    c = np.linalg.norm(a-b)
+    return c * c
+  
+#X - an n x d numpy array of n data points and d features
+#init - a k x d numpy array of k data points, each with d features (which are the initial guesses for the centroids)
+#---Returns--- 
+#total cost
+def computeTotalCost(centroids, clusterAssignments, X):
+    n = centroids.shape[0]
+    total_cost = 0
+    for i in range(n):
+        x_i = X[i]
+        cluster_index = clusterAssignments[i]
+        current_centroid = centroids[cluster_index]
+        d = dist(x_i, current_centroid)
+        total_cost += d
+    return total_cost
     
 ##--------------------------------------------------------------------------
 print "ML 6.036 code running"
