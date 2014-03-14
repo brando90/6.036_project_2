@@ -340,10 +340,65 @@ def part6():
     plt.plot(np.array(l_list), np.array(errors_train))
     plt.plot(np.array(l_list), np.array(errors_test))
     plt.show()
+    
+#----
+
+#X - an n x d numpy array of n data points and d features
+#init - a k x d numpy array of k data points, each with d features (which are the initial guesses for the centroids)
+#---Returns---
+# centroids - is a k x d numpy array of k data points, idicating the final centroids
+#clusterAssignments - is numpy array of n integers, each in the range from 0 to k-1 indicating
+#the cluster they are assiged to
+def ml_k_means(X, init):
+    k = init.shape[0]
+    n = X.shape[0]
+    clusterAssignments = np.zeros(n)
+    centroids = init
+    converge = False
+    convergence_count = 0
+    total_current_cluster_centroid_assignments = float("inf")
+    while not converge:
+        convergence_count = 0
+        #for fixed centroids z, assign best clusters C
+        for i in range(n):
+            x_i = X[i]
+            smallest_d = float("inf")
+            for j in range(k):
+                z_j = centroids[j]
+                d = dist(z_j, x_i)
+                if smallest_d > d:
+                    smallest_d = d
+                    closest_z_index = j
+            clusterAssignments[i] = closest_z_index
+            
+        current_tot_cost = computeTotalCost(centroids, clusterAssignments)
+        if total_current_cluster_centroid_assignments == current_tot_cost:
+            convergence_count += 1
+            
+        #for fixed clusters, assign best centroids
+        new_cluster = init.emptyCluster()
+        points_in_clusters = np.zeros(k)
+        for i in range(n):
+            x_i = X[i]
+            cluster_index = clusterAssignments[i]
+            points_in_clusters[cluster_index] += 1
+            new_cluster[cluster_index] = new_cluster[cluster_index] + x_i
+        for j in range(k):
+            size_of_cluster = points_in_clusters[j]
+            new_cluster[cluster_index] = new_cluster[cluster_index]/size_of_cluster
         
+        current_tot_cost = computeTotalCost(centroids, clusterAssignments)
+        if total_current_cluster_centroid_assignments == current_tot_cost:
+            convergence_count += 1
+        if convergence_count == 2:
+            convergence_count = True
+            break
+            
+    return (centroids, clusterAssignments)
+
     
 ##--------------------------------------------------------------------------
-
+print "ML 6.036 code running"
 # X: an n x d array, in which each row represents an image
 # y: a 1 x n vector, elements of which are integers between 0 and nc-1
 #    where nc is the number of classes represented in the data
@@ -361,6 +416,5 @@ def part6():
 #part5()
 part6()
 
-print score
 
-print "EOF"
+print "End of ML 6.036 code running"
