@@ -537,6 +537,7 @@ def kMedoids(X, init):
     #plotCluster(clusterAssignments, X)
     #print "iterations" , iterations
     indices = []
+    examplers = []
     #print centroids
     for cluster_index in range(k):
         mean = centroids[cluster_index]
@@ -547,10 +548,12 @@ def kMedoids(X, init):
             if smallest_distance > current_distance:
                 smallest_index = i
                 smallest_distance = distance
+                best_xi = x_i
+        examplers.append(best_xi)
         indices.append(smallest_index)
                 
     #(medoids, mIndex, cluster)
-    return (centroids, np.array(indices), clusterAssignments)
+    return (np.array(examplers), np.array(indices), clusterAssignments)
 
 def randomInit(X, k, seed = 0):
     n = X.shape[0]
@@ -591,13 +594,15 @@ def randomInit(X, k, seed = 0):
 
 ##------- Part 9
 
-def plot():
+def part9():
     X, y = getData()
     X1, y1 = limitPics(X, y, [4,13], 40)
     scores = []
     l_list = []
     for current_l in range(1, 41, 2):
-        Z1, U_effective = getProjectedFaces(X1, l = current_l) #Z = XU
+        Z1, U_effective = getProjectedFaces(X1, l = current_l)
+        if len(Z1.shape) == 1:
+            Z1 = Z1.reshape(-1,1)
         cheat_init = cheatInit(Z1, y1, k = 2)
         tuple_answer = kMedoids(Z1, cheat_init)
         score = scoreMedoids(tuple_answer, y1)
@@ -606,7 +611,30 @@ def plot():
     plt.plot(np.array(l_list), np.array(scores))
     plt.show()
     
-        
+#part9()   
+
+##-------- Part 10
+
+def part10():
+    X, y = getData()
+    n = X.shape[0]
+    best_score = -1
+    for i in range(n): 
+        for j in range(n):
+            if i == j:
+                continue
+            X1, y1 = limitPics(X, y, [i, j], 40)
+            cheat_init = cheatInit(X1, y1, k = 2)
+            (e, ind, clusterAssignments) = tuple_answer = kMedoids(X1, cheat_init)
+            score = dist(e[0], e[1])
+            #score = scoreMedoids(tuple_answer, y1)
+            if score > best_score:
+                best_score = score
+                best_i = i
+                best_j = j
+    print best_i, best_j
+            
+print part10()           
     
 # Scores the quality of a clustering, in terms of its agreement with a
 # vector of labels
