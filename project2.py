@@ -420,9 +420,71 @@ def computeTotalCost(centroids, clusterAssignments, X):
         total_cost += d
     return total_cost
     
+#plt.plot([0.5,0.5], [0,1] , 'ro')
+#plt.show()
+
+#x - n by 2
+def plotRawData(X, axis):
+    rows = X.shape[0]
+    x_coord = []
+    y_coord = []
+    for row in range(rows):
+        x = X[row][0]
+        y = X[row][1]
+        x_coord.append(x)
+        y_coord.append(y)
+    plt.plot(x_coord, y_coord , 'ro')
+    plt.axis(axis)
+    plt.show()
+
+def plotCluster(clusterAssignments, X):
+    n = X.shape[0]
+    clusters_xcoords = [[],[],[]]
+    clusters_ycoords = [[],[],[]]
+    #x_max = float("-inf")
+    #y_max = float("-inf")
+    #x_min = float("inf")
+    #y_min = float("inf")
+    print n
+    for i in range(n):
+        x_i = X[i]
+        print type(x_i[0])
+        print "xcords",clusters_xcoords
+        print "ycords",clusters_ycoords
+        #x_max = max(x_max, x_i[0])
+        #y_max = max(y_max, x_i[0])
+        #x_min = min(x_min, x_i[1])
+        #y_min = min(y_min, x_i[1])
+        cluster_index = clusterAssignments[i]
+        clusters_xcoords[cluster_index].append(float(x_i[0]))
+        clusters_ycoords[cluster_index].append(float(x_i[1]))
+    print clusters_xcoords
+    print clusters_ycoords
+    print clusters_xcoords[0]
+    print clusters_ycoords[0]
+    print clusters_xcoords[1]
+    print clusters_ycoords[1]
+    #plt.plot(clusters_xcoords[0], clusters_ycoords[0], 'ro', clusters_xcoords[1], clusters_ycoords[1], 'bo', clusters_xcoords[2], clusters_ycoords[2], 'go')
+    #plt.plot(clusters_xcoords[0], clusters_ycoords[0], 'ro')
+    plt.plot([0.1,0.4], [0.1, 0.4] , 'ro', [0.1,0.2], [0.1,0.2] , 'bo', [0.3,0.5], [0.4, 0.5], 'go')
+    
+    #plt.axis([x_min, y_min, x_max, y_max])
+    #plt.axis([0, 6, 0, 20])
+    plt.axis([0, 0, 1, 1])
+    plt.ylabel("y")
+    plt.show()
+        
+X = np.array( [[0.1, 0.1], [0.2, 0.2], [0.3, 0.3], [0.4, 0.4] ] )
+clusters = np.array([0,1 ,2 , 0])
+plotCluster(clusters, X)  
+#plt.plot([0.1,0.4], [0.1, 0.4] , 'ro', [0.1,0.2], [0.1,0.2] , 'bo', [0.3,0.5], [0.4, 0.5], 'go')
+#plt.axis([-1, 3, -1, 3])
+plt.show()
     
 ##--------------------------------------------------------------------------
+
 print "ML 6.036 code running"
+
 # X: an n x d array, in which each row represents an image
 # y: a 1 x n vector, elements of which are integers between 0 and nc-1
 #    where nc is the number of classes represented in the data
@@ -438,7 +500,7 @@ print "ML 6.036 code running"
 
 #part4(1)
 #part5()
-part6()
+#part6()
 
 
 print "End of ML 6.036 code running"
