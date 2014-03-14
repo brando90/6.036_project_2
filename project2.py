@@ -350,16 +350,17 @@ def part6():
 #clusterAssignments - is numpy array of n integers, each in the range from 0 to k-1 indicating
 #the cluster they are assiged to
 def ml_k_means(X, init):
+    d = X.shape[1]
     k = init.shape[0]
     n = X.shape[0]
     clusterAssignments = np.zeros(n)
     centroids = init
     converge = False
     convergence_count = 0
-    total_current_cluster_centroid_assignments = float("inf")
     while not converge:
         convergence_count = 0
         #for fixed centroids z, assign best clusters C
+        cost_before_update = computeTotalCost(centroids, clusterAssignments, X)
         for i in range(n):
             x_i = X[i]
             smallest_d = float("inf")
@@ -372,24 +373,27 @@ def ml_k_means(X, init):
             clusterAssignments[i] = closest_z_index
             
         current_tot_cost = computeTotalCost(centroids, clusterAssignments, X)
-        if total_current_cluster_centroid_assignments == current_tot_cost:
+        if cost_before_update == current_tot_cost:
             convergence_count += 1
-            
+        
         #for fixed clusters, assign best centroids
-        new_cluster = init.emptyCluster()
-        points_in_clusters = np.zeros(k)
+        cost_before_update = current_tot_cost
+        new_cluster = np.zeros(k, d) #return k by d
+        count_of_points_in_clusters = np.zeros(k)
         for i in range(n):
             x_i = X[i]
             cluster_index = clusterAssignments[i]
-            points_in_clusters[cluster_index] += 1
+            count_of_points_in_clusters[cluster_index] += 1
             new_cluster[cluster_index] = new_cluster[cluster_index] + x_i
         for j in range(k):
-            size_of_cluster = points_in_clusters[j]
-            new_cluster[cluster_index] = new_cluster[cluster_index]/size_of_cluster
-        
+            size_of_cluster = count_of_points_in_clusters[j]
+            new_cluster[j] = new_cluster[j]/size_of_cluster
+            
+        centroids = new_cluster
         current_tot_cost = computeTotalCost(centroids, clusterAssignments, X)
-        if total_current_cluster_centroid_assignments == current_tot_cost:
+        if cost_before_update == current_tot_cost:
             convergence_count += 1
+            
         if convergence_count == 2:
             convergence_count = True
             break
@@ -415,6 +419,7 @@ def computeTotalCost(centroids, clusterAssignments, X):
         d = dist(x_i, current_centroid)
         total_cost += d
     return total_cost
+    
     
 ##--------------------------------------------------------------------------
 print "ML 6.036 code running"
