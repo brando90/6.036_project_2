@@ -7,6 +7,7 @@ import sklearn
 import sklearn.svm
 from sklearn.svm import SVC
 import math
+import random as rand
 
 # Returns
 # X: an n x d array, in which each row represents an image
@@ -174,7 +175,7 @@ def cheatIndex(X, clusters, j, metric):
 # Scores the quality of a clustering, in terms of its agreement with a
 # vector of labels
 # Input:
-# - clustering: (medoids, clusters, indices) of type returned from kMedoids
+# - clustering: (medoids, mIndex, cluster) of type returned from kMedoids
 # - y: 1 by n array representing integer class labels
 # Output:
 # numerical score between 0 and 1
@@ -183,15 +184,16 @@ def scoreMedoids(clustering, y):
     n = cluster.shape[0]                  # how many samples
     # The actual label for each medoid, which we associate with
     # samples in cluster
-    medoidLabels = np.array([y[i] for i in mIndex]) 
-    print medoidLabels
+    medoidLabels = np.array([y[int(i)] for i in mIndex]) 
+    #print medoidLabels
     count = len(set(medoidLabels.tolist())) # how many actual people predicted
     # For each sample, what is the label implied by its cluster
-    clusterLabels = np.array([medoidLabels[c] for c in cluster])
-    score = sum([1 if y[i]==clusterLabels[i] else 0 \
+    clusterLabels = np.array([medoidLabels[int(c)] for c in cluster])
+    score = sum([1 if y[int(i)]==clusterLabels[int(i)] else 0 \
                  for i in xrange(n)])/float(n)
     return score
-    
+
+
 ##------------------------------------------------------      
         
             
@@ -341,7 +343,7 @@ def part6():
     plt.plot(np.array(l_list), np.array(errors_test))
     plt.show()
     
-#----
+#---- Part 7
 
 #X - an n x d numpy array of n data points and d features
 #init - a k x d numpy array of k data points, each with d features (which are the initial guesses for the centroids)
@@ -358,10 +360,14 @@ def ml_k_means(X, init):
     converge = False
     convergence_count = 0
     iterations = 0
+    #plotCluster(clusterAssignments, X)
+    #plt.show()
     while not converge:
         convergence_count = 0
         #for fixed centroids z, assign best clusters C
-        plotCluster(clusterAssignments, X)
+        
+        #plotCluster(clusterAssignments, X)
+        #plt.show()
         cost_before_update = computeTotalCost(centroids, clusterAssignments, X)
         for i in range(n):
             x_i = X[i]
@@ -378,16 +384,15 @@ def ml_k_means(X, init):
         if cost_before_update == current_tot_cost:
             convergence_count += 1
         
-        plotCluster(clusterAssignments, X)
         #for fixed clusters, assign best centroids
         cost_before_update = current_tot_cost
         new_cluster = np.zeros((k, d)) #return k by d
         count_of_points_in_clusters = np.zeros(k)
         for i in range(n):
             x_i = X[i]
-            cluster_index = clusterAssignments[i]
-            count_of_points_in_clusters[cluster_index] += 1
-            new_cluster[cluster_index] = new_cluster[cluster_index] + x_i
+            cluster_index = int(clusterAssignments[i])
+            count_of_points_in_clusters[int(cluster_index)] += 1
+            new_cluster[int(cluster_index)] = new_cluster[int(cluster_index)] + x_i
         for j in range(k):
             size_of_cluster = count_of_points_in_clusters[j]
             new_cluster[j] = new_cluster[j]/size_of_cluster
@@ -402,8 +407,8 @@ def ml_k_means(X, init):
             break
         iterations+=1
     
-    plotCluster(clusterAssignments, X)
-    print "iterations" , iterations
+    #plotCluster(clusterAssignments, X)
+    #print "iterations" , iterations
     return (centroids, clusterAssignments)
 
 #eucledian distance
@@ -447,44 +452,174 @@ def plotCluster(clusterAssignments, X):
     n = X.shape[0]
     clusters_xcoords = [[],[],[]]
     clusters_ycoords = [[],[],[]]
-    #x_max = float("-inf")
-    #y_max = float("-inf")
-    #x_min = float("inf")
-    #y_min = float("inf")
-    print n
     for i in range(n):
         x_i = X[i]
-        #x_max = max(x_max, x_i[0])
-        #y_max = max(y_max, x_i[0])
-        #x_min = min(x_min, x_i[1])
-        #y_min = min(y_min, x_i[1])
         cluster_index = clusterAssignments[i]
         clusters_xcoords[int(cluster_index)].append(float(x_i[0]))
         clusters_ycoords[int(cluster_index)].append(float(x_i[1]))
-    print clusters_xcoords
-    print clusters_ycoords
-    print clusters_xcoords[0]
-    print clusters_ycoords[0]
-    print clusters_xcoords[1]
-    print clusters_ycoords[1]
     plt.plot(clusters_xcoords[0], clusters_ycoords[0], 'ro', clusters_xcoords[1], clusters_ycoords[1], 'bo', clusters_xcoords[2], clusters_ycoords[2], 'go')
     plt.axis([-1, 3, -1, 3])
     plt.show()
         
-X = np.array( [[-0.3, -0.3], [-0.1, -0.6], [-0.4, -0.55], [-0.5, -0.5], \
-                [2, -0.5], [2.1, -0.6], [2.3, -0.4], [2.2, -0.7], \
-                [1, 2.0], [1.1, 2.5], [0.9, 2.3], [1.2, 2.2] ] )
-                
-init = np.array([[-0.35, -0.33], [2.32, -0.46], [1.29, 2.28]])
+#X = np.array( [[-0.3, -0.3], [-0.1, -0.6], [-0.4, -0.55], [-0.5, -0.5], [0.6, 1.6], \
+#                [2.0, -0.5], [2.1, -0.6], [2.3, -0.4], [2.2, -0.7], [1.5, -0.5], \
+#                [1, 2.0], [1.1, 2.5], [0.9, 2.3], [1.2, 2.2] , [0.3, -0.5]] )
+#                
+#init0 = np.array([[0.75, -0.56], [1.3, 0.9], [2.95, 1.0]])
+#init1 = np.array([[0.4, -0.7], [1.0, 0.9], [2.9, 1.1]])
 
-(centr, clusterAsg) = ml_k_means(X, init)
-answers = np.array([0, 0, 0, 0, \
-                     1, 1, 1, 1, \
-                     2, 2, 2, 2])
-plotCluster(clusterAsg, X)  
+#(centr, clusterAsg) = ml_k_means(X, init0)
+#answers = np.array([0, 0, 0, 0, 2, \
+                     #1, 1, 1, 1, 0, \
+                     #2, 2, 2, 2, 0 ])
+#plotCluster(clusterAsg, X)  
 #plt.plot([0.1,0.4], [0.1, 0.4] , 'ro', [0.1,0.2], [0.1,0.2] , 'bo', [0.3,0.5], [0.4, 0.5], 'go')
 #plt.axis([-1, 3, -1, 3])
-plt.show()
+
+#--- PART 8
+
+def kMedoids(X, init):
+    d = X.shape[1]
+    k = init.shape[0]
+    n = X.shape[0]
+    clusterAssignments = np.zeros(n)
+    centroids = init
+    converge = False
+    convergence_count = 0
+    iterations = 0
+    #plotCluster(clusterAssignments, X)
+    #plt.show()
+    while not converge:
+        convergence_count = 0
+        #for fixed centroids z, assign best clusters C
+        
+        #plotCluster(clusterAssignments, X)
+        #plt.show()
+        cost_before_update = computeTotalCost(centroids, clusterAssignments, X)
+        for i in range(n):
+            x_i = X[i]
+            smallest_d = float("inf")
+            for j in range(k):
+                z_j = centroids[j]
+                distance = dist(z_j, x_i)
+                if smallest_d > distance:
+                    smallest_d = distance
+                    closest_z_index = j
+            clusterAssignments[i] = closest_z_index
+            
+        current_tot_cost = computeTotalCost(centroids, clusterAssignments, X)
+        if cost_before_update == current_tot_cost:
+            convergence_count += 1
+        
+        #for fixed clusters, assign best centroids
+        cost_before_update = current_tot_cost
+        new_cluster = np.zeros((k, d)) #return k by d
+        count_of_points_in_clusters = np.zeros(k)
+        for i in range(n):
+            x_i = X[i]
+            cluster_index = int(clusterAssignments[i])
+            count_of_points_in_clusters[int(cluster_index)] += 1
+            new_cluster[int(cluster_index)] = new_cluster[int(cluster_index)] + x_i
+        for j in range(k):
+            size_of_cluster = count_of_points_in_clusters[j]
+            new_cluster[j] = new_cluster[j]/size_of_cluster
+            
+        centroids = new_cluster
+        current_tot_cost = computeTotalCost(centroids, clusterAssignments, X)
+        if cost_before_update == current_tot_cost:
+            convergence_count += 1
+            
+        if convergence_count == 2:
+            convergence_count = True
+            break
+        iterations+=1
+    
+    #plotCluster(clusterAssignments, X)
+    #print "iterations" , iterations
+    indices = []
+    #print centroids
+    for cluster_index in range(k):
+        mean = centroids[cluster_index]
+        smallest_distance = float("inf")
+        for i in range(n):
+            x_i = X[i]
+            current_distance = dist(x_i, mean)
+            if smallest_distance > current_distance:
+                smallest_index = i
+                smallest_distance = distance
+        indices.append(smallest_index)
+                
+    #(medoids, mIndex, cluster)
+    return (centroids, np.array(indices), clusterAssignments)
+
+def randomInit(X, k, seed = 0):
+    n = X.shape[0]
+    rand.seed(seed)
+    init = []
+    for i in range(k):
+	randint = rand.randint(0, n)
+	current = list(X[randint])
+	init.append(current)
+    return np.array(init)
+
+#X, y = getData()
+#X1, y1 = limitPics(X, y, [4,13], 40)
+
+#showIm(X1[0])
+
+#cheat_init = cheatInit(X1, y1, k = 2)
+#cheat_centroids, cheat_clusterAssignments = ml_k_means(X1, cheat_init)
+
+#tuple_answer = kMedoids(X1, cheat_init)
+#score = scoreMedoids(tuple_answer, y1)
+#print "cheat init: ", score
+#
+#tot = 0
+#iterations_rand = 100
+#for s in range(iterations_rand):
+#    my_init = randomInit(X1, k = 2, seed = s)
+#
+#    my_centroids, my_clusterAssignments = ml_k_means(X1, my_init)
+#    cheat_centroids, cheat_clusterAssignments = ml_k_means(X1, cheat_init)
+#
+#    tuple_answer = kMedoids(X1, my_init)
+#    score = scoreMedoids(tuple_answer, y1)
+#    print "seed = ", s , "score = ", score 
+#    tot += score
+#average = tot/iterations_rand
+#print average
+
+##------- Part 9
+
+def plot():
+    X, y = getData()
+    X1, y1 = limitPics(X, y, [4,13], 40)
+    scores = []
+    l_list = []
+    for current_l in range(1, 41, 2):
+        Z1, U_effective = getProjectedFaces(X1, l = current_l) #Z = XU
+        cheat_init = cheatInit(Z1, y1, k = 2)
+        tuple_answer = kMedoids(Z1, cheat_init)
+        score = scoreMedoids(tuple_answer, y1)
+        l_list.append(current_l)
+        scores.append(score)
+    plt.plot(np.array(l_list), np.array(scores))
+    plt.show()
+    
+        
+    
+# Scores the quality of a clustering, in terms of its agreement with a
+# vector of labels
+# Input:
+# - clustering: (medoids, clusters, indices) of type returned from kMedoids
+# - y: 1 by n array representing integer class labels
+
+#showIm(cheat_centroids[0])
+#showIm(my_centroids[0])
+#showIm(cheat_centroids[1])
+#showIm(my_centroids[1])
+
+
     
 ##--------------------------------------------------------------------------
 
@@ -503,7 +638,7 @@ print "ML 6.036 code running"
 #clf.fit(trainX, trainY)
 #score = clf.score(testX,testY)
 
-#part4(1)
+#part4(1288)
 #part5()
 #part6()
 
