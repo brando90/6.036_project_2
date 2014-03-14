@@ -6,6 +6,7 @@ import matplotlib.cm as cm
 import sklearn
 import sklearn.svm
 from sklearn.svm import SVC
+import math
 
 # Returns
 # X: an n x d array, in which each row represents an image
@@ -28,6 +29,20 @@ def getData():
     print("n_features: %d" % d)
     print("n_classes: %d" % n_classes)
     return X, y
+    
+def getData2():
+    global X, n, d, y, h, w
+    lfw_people = fetch_lfw_people(min_faces_per_person=40, resize=0.4)
+    n, h, w = lfw_people.images.shape
+    X = lfw_people.data
+    d = X.shape[1]
+    y = lfw_people.target
+    n_classes = lfw_people.target_names.shape[0]
+    print("Total dataset size:")
+    print("n_samples: %d" % n)
+    print("n_features: %d" % d)
+    print("n_classes: %d" % n_classes)
+    return X, y, n_classes
 
 # Input
 # im: a row or column vector of dimension d
@@ -40,6 +55,7 @@ def showIm(im, size = lfw_imageSize):
     im = im.copy()
     im.resize(*size)
     plt.imshow(im.astype(float), cmap = cm.gray)
+    plt.show()
 
 # Take an eigenvector and make it into an image
 def vecToImage(x, size = lfw_imageSize):
@@ -175,3 +191,176 @@ def scoreMedoids(clustering, y):
     score = sum([1 if y[i]==clusterLabels[i] else 0 \
                  for i in xrange(n)])/float(n)
     return score
+    
+##------------------------------------------------------      
+        
+            
+def getAverageFace(X):
+    (number_of_faces, number_of_features) = X.shape
+    tot = np.zeros(number_of_features)
+    for face in range(number_of_faces):
+        face = X[face]
+        tot = (tot + face)/number_of_faces
+    average_face = tot
+    return average_face
+    
+def getAverageFaceForEachClass(X, y, nclasses):
+    (number_of_faces, number_of_features) = X.shape
+    class_to_vec_img = []
+    counts_for_each_class = []
+    for i in range(nclasses):
+        counts_for_each_class.append(0)
+        class_to_vec_img.append(np.zeros(number_of_features))
+    
+    for i in range(number_of_faces):
+        current_class = y[i]
+        current_img_vec = X[i]
+        class_to_vec_img[current_class] = class_to_vec_img[current_class] + current_img_vec
+        counts_for_each_class[current_class] += 1
+    
+    for current_class in range(nclasses):
+        class_to_vec_img[current_class] = class_to_vec_img[current_class] / counts_for_each_class[current_class]
+        
+    return class_to_vec_img
+        
+def displayAllFacesForAllClasses():
+    X,y, nclasses = getData2()
+    class_to_vec_img = getAverageFaceForEachClass(X, y, nclasses)
+    for current_class in range(nclasses):
+        current_face = class_to_vec_img[current_class]
+        showIm(current_face)
+
+def displayAverageFaceForEveryone():
+    X,y = getData()
+    average_face = getAverageFace(X)
+    showIm(average_face)
+
+##-------------------
+
+#returns Z = XU and the eigenvectors that were selected
+#k - number of raw data to project
+#l - number of eigenvectors to use for projection
+def getProjectedFaces(X, l, s = False):
+    U, mu = PCA(X, s)
+    U_effective = extractToplPCA(U, l)
+    Z = np.dot(X, U_effective)
+    return Z, U_effective
+    
+def getReconstructedFaces(Z, U):
+    if len(Z.shape) == 1 or len(U.shape) == 1:
+        Z = Z.reshape(-1,1)
+        U = U.reshape(-1,1)
+    X_reconstructed = np.dot(Z, U.T)
+    return X_reconstructed
+    
+def extractToplPCA(U, l):
+    U_effective = U[:,0]
+    if l == 1:
+        return U_effective
+    for i in range(1,l):
+        u = U[:,i]
+        U_effective = np.column_stack((U_effective, u))
+    return U_effective
+    
+def displayFaces(X):
+    (number_of_faces, number_of_features) = X.shape
+    for i_f in range(number_of_faces):
+        current_face = X[i_f]
+        showIm(current_face)
+        
+def displayReconstructedFaces(X_reconstructed):
+    plotGallery([vecToImage(X_reconstructed[i,:]) for i in range(12)])
+    plt.show()
+    
+def part4(l_input):
+    (X, y, nclasses) = getData2()
+
+    Z, U_effective = getProjectedFaces(X, l = l_input) #Z = XU
+
+    X_reconstructed = getReconstructedFaces(Z, U_effective) #X' = ZUt = XUUt
+
+    displayReconstructedFaces(X_reconstructed)
+               
+##----
+def getNewY(y, discriminate_person = 4):
+    new_y = np.zeros(len(y))
+    for i in range(len(y)):
+        current_y = y[i]
+        if current_y == discriminate_person:
+            new_y[i] = 1
+        else:
+            new_y[i] = -1
+    return new_y
+            
+def getTrainTestData(X, newY, testSize = 0.75):
+    (trainX, testX, trainY, testY) = sklearn.cross_validation.train_test_split(X, newY, test_size = testSize)
+    return (trainX, testX, trainY, testY)
+    
+#Part5
+def part5():
+    (X, y, nclasses) = getData2()
+    Z, U_effective = getProjectedFaces(X, l = 100, s = True)
+    newY = getNewY(y)
+    (trainX, testX, trainY, testY) = getTrainTestData(Z, newY, testSize = 0.75)
+    errors_train = []
+    errors_test = []
+    logc_list = []
+    for logc in range(-10, 10, 1):
+        c = math.pow(10, logc)
+        clf = sklearn.svm.SVC(kernel = 'linear', C = c)
+        clf.fit(trainX, trainY)
+        error_test = 1 - clf.score(testX, testY)
+        error_train = 1 - clf.score(trainX, trainY)
+        logc_list.append(logc)
+        errors_train.append(error_train)
+        errors_test.append(error_test)
+    plt.plot(np.array(logc_list), np.array(errors_train))
+    plt.plot(np.array(logc_list), np.array(errors_test))
+    plt.show()
+    
+#Part6
+def part6():
+    (X, y, nclasses) = getData2()
+    newY = getNewY(y)
+    c = 100
+    errors_train = []
+    errors_test = []
+    l_list = []
+    clf = sklearn.svm.SVC(kernel = 'linear', C = c)
+    for current_l in range(1, 301, 10):
+        Z, U_effective = getProjectedFaces(X, l = current_l, s = True)
+        (trainX, testX, trainY, testY) = sklearn.cross_validation.train_test_split(X, newY, test_size = 0.75)
+        clf.fit(trainX, trainY)
+        
+        error_test = 1 - clf.score(testX, testY)
+        error_train = 1 - clf.score(trainX, trainY)
+        errors_train.append(error_train)
+        errors_test.append(error_test)
+        l_list.append(current_l)
+    plt.plot(np.array(l_list), np.array(errors_train))
+    plt.plot(np.array(l_list), np.array(errors_test))
+    plt.show()
+        
+    
+##--------------------------------------------------------------------------
+
+# X: an n x d array, in which each row represents an image
+# y: a 1 x n vector, elements of which are integers between 0 and nc-1
+#    where nc is the number of classes represented in the data
+
+#(X, y, nclasses) = getData2()
+#Z, U_effective = getProjectedFaces(X, l = 100, s = True)
+#X_reconstructed = getReconstructedFaces(Z, U_effective)
+#newY = getNewY(y)
+#(trainX, testX, trainY, testY) = getTrainTestData(X_reconstructed, newY, testSize = 0.75)
+#clf = sklearn.svm.SVC(kernel = 'linear', C = 1.0)
+#clf.fit(trainX, trainY)
+#score = clf.score(testX,testY)
+
+#part4(1)
+#part5()
+part6()
+
+print score
+
+print "EOF"
