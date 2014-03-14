@@ -357,18 +357,20 @@ def ml_k_means(X, init):
     centroids = init
     converge = False
     convergence_count = 0
+    iterations = 0
     while not converge:
         convergence_count = 0
         #for fixed centroids z, assign best clusters C
+        plotCluster(clusterAssignments, X)
         cost_before_update = computeTotalCost(centroids, clusterAssignments, X)
         for i in range(n):
             x_i = X[i]
             smallest_d = float("inf")
             for j in range(k):
                 z_j = centroids[j]
-                d = dist(z_j, x_i)
-                if smallest_d > d:
-                    smallest_d = d
+                distance = dist(z_j, x_i)
+                if smallest_d > distance:
+                    smallest_d = distance
                     closest_z_index = j
             clusterAssignments[i] = closest_z_index
             
@@ -376,9 +378,10 @@ def ml_k_means(X, init):
         if cost_before_update == current_tot_cost:
             convergence_count += 1
         
+        plotCluster(clusterAssignments, X)
         #for fixed clusters, assign best centroids
         cost_before_update = current_tot_cost
-        new_cluster = np.zeros(k, d) #return k by d
+        new_cluster = np.zeros((k, d)) #return k by d
         count_of_points_in_clusters = np.zeros(k)
         for i in range(n):
             x_i = X[i]
@@ -397,7 +400,10 @@ def ml_k_means(X, init):
         if convergence_count == 2:
             convergence_count = True
             break
-            
+        iterations+=1
+    
+    plotCluster(clusterAssignments, X)
+    print "iterations" , iterations
     return (centroids, clusterAssignments)
 
 #eucledian distance
@@ -415,7 +421,7 @@ def computeTotalCost(centroids, clusterAssignments, X):
     for i in range(n):
         x_i = X[i]
         cluster_index = clusterAssignments[i]
-        current_centroid = centroids[cluster_index]
+        current_centroid = centroids[int(cluster_index)]
         d = dist(x_i, current_centroid)
         total_cost += d
     return total_cost
@@ -448,35 +454,34 @@ def plotCluster(clusterAssignments, X):
     print n
     for i in range(n):
         x_i = X[i]
-        print type(x_i[0])
-        print "xcords",clusters_xcoords
-        print "ycords",clusters_ycoords
         #x_max = max(x_max, x_i[0])
         #y_max = max(y_max, x_i[0])
         #x_min = min(x_min, x_i[1])
         #y_min = min(y_min, x_i[1])
         cluster_index = clusterAssignments[i]
-        clusters_xcoords[cluster_index].append(float(x_i[0]))
-        clusters_ycoords[cluster_index].append(float(x_i[1]))
+        clusters_xcoords[int(cluster_index)].append(float(x_i[0]))
+        clusters_ycoords[int(cluster_index)].append(float(x_i[1]))
     print clusters_xcoords
     print clusters_ycoords
     print clusters_xcoords[0]
     print clusters_ycoords[0]
     print clusters_xcoords[1]
     print clusters_ycoords[1]
-    #plt.plot(clusters_xcoords[0], clusters_ycoords[0], 'ro', clusters_xcoords[1], clusters_ycoords[1], 'bo', clusters_xcoords[2], clusters_ycoords[2], 'go')
-    #plt.plot(clusters_xcoords[0], clusters_ycoords[0], 'ro')
-    plt.plot([0.1,0.4], [0.1, 0.4] , 'ro', [0.1,0.2], [0.1,0.2] , 'bo', [0.3,0.5], [0.4, 0.5], 'go')
-    
-    #plt.axis([x_min, y_min, x_max, y_max])
-    #plt.axis([0, 6, 0, 20])
-    plt.axis([0, 0, 1, 1])
-    plt.ylabel("y")
+    plt.plot(clusters_xcoords[0], clusters_ycoords[0], 'ro', clusters_xcoords[1], clusters_ycoords[1], 'bo', clusters_xcoords[2], clusters_ycoords[2], 'go')
+    plt.axis([-1, 3, -1, 3])
     plt.show()
         
-X = np.array( [[0.1, 0.1], [0.2, 0.2], [0.3, 0.3], [0.4, 0.4] ] )
-clusters = np.array([0,1 ,2 , 0])
-plotCluster(clusters, X)  
+X = np.array( [[-0.3, -0.3], [-0.1, -0.6], [-0.4, -0.55], [-0.5, -0.5], \
+                [2, -0.5], [2.1, -0.6], [2.3, -0.4], [2.2, -0.7], \
+                [1, 2.0], [1.1, 2.5], [0.9, 2.3], [1.2, 2.2] ] )
+                
+init = np.array([[-0.35, -0.33], [2.32, -0.46], [1.29, 2.28]])
+
+(centr, clusterAsg) = ml_k_means(X, init)
+answers = np.array([0, 0, 0, 0, \
+                     1, 1, 1, 1, \
+                     2, 2, 2, 2])
+plotCluster(clusterAsg, X)  
 #plt.plot([0.1,0.4], [0.1, 0.4] , 'ro', [0.1,0.2], [0.1,0.2] , 'bo', [0.3,0.5], [0.4, 0.5], 'go')
 #plt.axis([-1, 3, -1, 3])
 plt.show()
